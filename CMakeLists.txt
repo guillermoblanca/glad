@@ -11,7 +11,7 @@ if(NOT CMAKE_VERSION VERSION_LESS 3.1)
   cmake_policy(SET CMP0054 NEW)
 endif()
 
-project(GLAD VERSION 0.1.29 LANGUAGES C)
+project(GLAD VERSION 0.1.30 LANGUAGES C)
 
 
 set(GLAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -32,6 +32,10 @@ else()
   option(GLAD_EXPORT "Set export variables for external project" ON)
 endif()
 option(GLAD_INSTALL "Generate installation target" OFF)
+
+if (MSVC)
+    option(USE_MSVC_RUNTIME_LIBRARY_DLL "Use MSVC runtime library DLL" ON)
+endif()
 
 if(GLAD_GENERATOR STREQUAL "d")
   list(APPEND GLAD_SOURCES
@@ -101,6 +105,25 @@ endif()
 
 if(GLAD_LINKER_LANGUAGE)
   set_target_properties(glad PROPERTIES LINKER_LANGUAGE ${GLAD_LINKER_LANGUAGE})
+endif()
+
+if (MSVC)
+  if (NOT USE_MSVC_RUNTIME_LIBRARY_DLL)
+    foreach (flag CMAKE_C_FLAGS
+                  CMAKE_C_FLAGS_DEBUG
+                  CMAKE_C_FLAGS_RELEASE
+                  CMAKE_C_FLAGS_MINSIZEREL
+                  CMAKE_C_FLAGS_RELWITHDEBINFO)
+
+      if (${flag} MATCHES "/MD")
+        string(REGEX REPLACE "/MD" "/MT" ${flag} "${${flag}}")
+      endif()
+      if (${flag} MATCHES "/MDd")
+        string(REGEX REPLACE "/MDd" "/MTd" ${flag} "${${flag}}")
+      endif()
+
+    endforeach()
+  endif()
 endif()
 
 # Export
